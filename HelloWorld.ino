@@ -1,13 +1,20 @@
+#include <Ethernet.h>
+#include <SPI.h>
+
 #include "polarssl/ssl.h"
 #include "polarssl/ctr_drbg.h"
 
 const char *opt_psk = "c033f52671c61c8128f7f8a40be88038bcf2b07a6eb3095c36e3759f0cf40837";
-const char *opt_psk_identity = "psk_identity";
+const char *opt_psk_identity = "Client_identity";
 
 unsigned char psk[256];
 size_t psk_len = 0;
 
 ssl_context ssl;
+
+EthernetClient client;
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0x24, 0xA8 };
+IPAddress server(192, 168, 0, 145);
 
 void psk_unhexify() {
     unsigned char c;
@@ -69,20 +76,45 @@ static void my_debug(void *ctx, int level, const char *str)
 
 int ar_recv(void *ctx, unsigned char *buf, size_t len)
 {
-	Serial.println("recv");
-	for (int i=0; i<len; i++) {
-		Serial.println(buf[i]);
+	Serial.print("recv ");
+	Serial.println(len);
+	
+	int recv = 0;
+	while (true) {
+		if (!client.available()) {
+			//Serial.println("nothing available");
+			delay(100);
+			continue;
+		}
+		char c = client.read();
+		Serial.println((int)c);
+		buf[recv++] = c;
+		if (recv >= len) break;
 	}
-	return len;
+
+	Serial.print("received ");
+	Serial.println(recv);
+
+	return recv;
 }
 
 int ar_send(void *ctx, const unsigned char *buf, size_t len)
 {
-	Serial.println("send");
+	Serial.print("send ");
+	Serial.println(len);
 	for (int i=0; i<len; i++) {
-		Serial.println(buf[i]);
+		Serial.print(buf[i]);
+		Serial.print(" ");
 	}
-	return len;
+	Serial.println();
+
+	int sent = client.write(buf, len);
+	client.flush();
+
+	Serial.print("sent ");
+	Serial.println(sent);
+
+	return sent;
 }
 
 int ar_random(void *p_rng, unsigned char *output, size_t output_len)
@@ -96,6 +128,23 @@ void setup()
 {
 	Serial.begin(9600);
 	Serial.println("setup");
+
+	// Ethernet
+
+	Serial.println("ethernet");
+
+	Ethernet.begin(mac);
+
+	delay(1000);
+
+	Serial.println("connection");
+
+	if (!client.connect(server, 4433)) {
+		Serial.println("connection failed");
+		return;
+	}
+
+	// PolarSSL
 
 	Serial.println("unhexify");
 
