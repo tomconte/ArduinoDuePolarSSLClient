@@ -16,6 +16,15 @@ EthernetClient client;
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0x24, 0xA8 };
 IPAddress server(192, 168, 0, 145);
 
+// from https://github.com/mpflaga/Arduino-MemoryFree/blob/master/MemoryFree.cpp
+extern "C" char* sbrk(int incr);
+int freeRam ()
+{
+	char top;
+	return &top - reinterpret_cast<char*>(sbrk(0));
+}
+
+// from polarssl/programs/ssl/ssl_client2.c
 void psk_unhexify() {
     unsigned char c;
     size_t j;
@@ -129,6 +138,9 @@ void setup()
 	Serial.begin(9600);
 	Serial.println("setup");
 
+	Serial.print("free ram = ");
+	Serial.println(freeRam());
+
 	// Ethernet
 
 	Serial.println("ethernet");
@@ -176,6 +188,9 @@ void setup()
 
 	Serial.print("ssl_handshake = ");
 	Serial.println(hs_res);
+
+	Serial.print("free ram = ");
+	Serial.println(freeRam());
 }
 
 void loop()
