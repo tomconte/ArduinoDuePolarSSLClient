@@ -15,10 +15,12 @@
 #
 # By Paul Dreik 20130503 http://www.pauldreik.se/
 
+# before uploading: mode com6:1200
 
 #user specific settings:
 #where to find the IDE
 ARHOME:=C:/apps/arduino-1.5.6-r2
+MYHOME:=C:/Users/tconte/Documents/Arduino
 ADIR:=$(ARHOME)/hardware
 POLARSSL:=C:/dev/polarssl
 #which serial port to use (add a file with SUBSYSTEMS=="usb", ATTRS{product}=="Arduino Due Prog. Port", ATTRS{idProduct}=="003d", ATTRS{idVendor}=="2341", SYMLINK+="arduino_due" in /etc/udev/rules.d/ to get this working)
@@ -162,7 +164,9 @@ $(TMPDIR)/$(PROJNAME).bin: $(TMPDIR)/$(PROJNAME).elf
 #upload to the arduino by first resetting it (stty) and the running bossac
 upload: $(TMPDIR)/$(PROJNAME).bin
 	#stty -F $(PORT) cs8 1200 hupcl
-	$(ADIR)/tools/bossac --port=COM6 -U false -e -w $(VERIFY) -b $(TMPDIR)/$(PROJNAME).bin -R
+	#press erase button, then reset
+	#remember to close the serial monitor
+	$(ADIR)/tools/bossac --port=COM10 -U false -e -w $(VERIFY) -b $(TMPDIR)/$(PROJNAME).bin -R
 
 #to view the serial port with screen.
 monitor:

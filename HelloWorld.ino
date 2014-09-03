@@ -14,7 +14,7 @@ ssl_context ssl;
 
 EthernetClient client;
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0x24, 0xA8 };
-IPAddress server(192, 168, 0, 145);
+IPAddress server(10, 166, 11, 65);
 
 // from https://github.com/mpflaga/Arduino-MemoryFree/blob/master/MemoryFree.cpp
 extern "C" char* sbrk(int incr);
@@ -91,12 +91,12 @@ int ar_recv(void *ctx, unsigned char *buf, size_t len)
 	int recv = 0;
 	while (true) {
 		if (!client.available()) {
-			//Serial.println("nothing available");
+			Serial.println("nothing available");
 			delay(100);
 			continue;
 		}
 		char c = client.read();
-		Serial.println((int)c);
+		//Serial.println((int)c);
 		buf[recv++] = c;
 		if (recv >= len) break;
 	}
@@ -111,11 +111,12 @@ int ar_send(void *ctx, const unsigned char *buf, size_t len)
 {
 	Serial.print("send ");
 	Serial.println(len);
-	for (int i=0; i<len; i++) {
+	
+	/*for (int i=0; i<len; i++) {
 		Serial.print(buf[i]);
 		Serial.print(" ");
 	}
-	Serial.println();
+	Serial.println();*/
 
 	int sent = client.write(buf, len);
 	client.flush();
@@ -156,7 +157,7 @@ void setup()
 		return;
 	}
 
-	// PolarSSL
+	// PolarSSL initialization
 
 	Serial.println("unhexify");
 
@@ -188,6 +189,21 @@ void setup()
 
 	Serial.print("ssl_handshake = ");
 	Serial.println(hs_res);
+
+	// Send something
+
+	char buf[512];
+	strcpy(buf, "hello world");
+
+	ssl_write(&ssl, (const unsigned char*)buf, strlen(buf));
+
+	// Read a response
+
+	int read_bytes = ssl_read(&ssl, (unsigned char*)buf, 512);
+	buf[read_bytes] = '\0';
+	Serial.println(buf);
+
+	// Let's see how much RAM we have left
 
 	Serial.print("free ram = ");
 	Serial.println(freeRam());
